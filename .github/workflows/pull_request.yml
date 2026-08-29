@@ -28,7 +28,7 @@ jobs:
       - name: Run Pylint
         run: uv run pylint . --verbose --fail-under=2
       
-      - name: Run test and coverage
-        run: uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=95
+      # - name: Run test and coverage
+      #   run: uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=95
 
           

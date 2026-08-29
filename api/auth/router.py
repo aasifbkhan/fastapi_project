@@ -1,3 +1,6 @@
+"""
+Authentication related apis
+"""
 from fastapi import APIRouter, status, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_session
@@ -16,7 +19,14 @@ auth_service = AuthService(user_repository)
 email_service = EmailService()
 
 @router.post("/signup", response_model=SignupResponse,status_code=status.HTTP_201_CREATED)
-async def user_signup(data: SignupRequest, background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_session)):
+async def user_signup(
+    data: SignupRequest, background_tasks:
+    BackgroundTasks,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    User signup request.
+    """
     try:
         user = await auth_service.signup(data, session)
         background_tasks.add_task(
@@ -27,7 +37,7 @@ async def user_signup(data: SignupRequest, background_tasks: BackgroundTasks, se
         )
         return {"message": "Sign up successfull..!! Please check your email to verify the email."}
     except ValueError as exc:
-        raise HTTPException(
+        return HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc)
         )

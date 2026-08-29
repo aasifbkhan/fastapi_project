@@ -1,0 +1,13 @@
+# Local virtual environment (contains host-specific Python executables)
+.venv/
+
+# Python build and cache artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Local-only configuration and source-control metadata
+.env
+.git/

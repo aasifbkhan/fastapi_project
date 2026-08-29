@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: .
+    container_name: devflow-api
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env
+    environment:
+      WATCHFILES_FORCE_POLLING: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uv run --no-sync uvicorn main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app
+    volumes:
+      - .:/app
+  db:
+    image: postgres:18
+    container_name: devflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+volumes:
+  postgres_data:
+    

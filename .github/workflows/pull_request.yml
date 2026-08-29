@@ -30,5 +30,12 @@ jobs:
       
       - name: Run test and coverage
         run: uv run pytest --cov=. --cov-report=term-missing --cov-report=html --cov-fail-under=95
+      
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
 
           

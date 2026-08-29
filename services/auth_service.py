@@ -7,10 +7,10 @@ from models.user import User
 class AuthService:
     def __init__(
         self,
-        user_repository: UserRepository
+        user_repository: UserRepository,
     ):
         self.user_repository = user_repository
-
+        
     async def signup(self, data: SignupRequest, session: AsyncSession):
         existing_email = await self.user_repository.get_by_email(
             data.email,
@@ -30,8 +30,7 @@ class AuthService:
         )
 
         try:
-            await self.user_repository.create(user, session)
-            return {"message": "User registerd succesfully"}
+            return await self.user_repository.create(user, session)
         except Exception as exc:
             raise
         

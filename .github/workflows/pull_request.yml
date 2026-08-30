@@ -10,6 +10,19 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
 
+    env:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      SMTP_USERNAME: test_user
+      SMTP_PASSWORD: test_password
+      SMTP_FROM: test@example.com
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

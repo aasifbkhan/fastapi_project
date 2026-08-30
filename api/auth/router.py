@@ -37,7 +37,7 @@ async def user_signup(
         )
         return {"message": "Sign up successfull..!! Please check your email to verify the email."}
     except ValueError as exc:
-        return HTTPException(
+        raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc)
-        )
+        ) from exc

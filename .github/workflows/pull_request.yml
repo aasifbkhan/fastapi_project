@@ -10,6 +10,18 @@ jobs:
     name: Code Quality
     runs-on: ubuntu-latest
 
+    env:
+      POSTGRES_DB: devflow_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      SMTP_HOST: localhost
+      SMTP_PORT: 2525
+      SMTP_USERNAME: test
+      SMTP_PASSWORD: test
+      SMTP_FROM: test@example.com
+
     services:
       postgres:
         image: postgres:18
@@ -41,17 +53,6 @@ jobs:
         run: uv sync --dev
       
       - name: Run Database Migrations
-        env:
-          POSTGRES_DB: devflow_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          SMTP_HOST: localhost
-          SMTP_PORT: 2525
-          SMTP_USERNAME: test
-          SMTP_PASSWORD: test
-          SMTP_FROM: test@example.com
         run: |
           uv run alembic upgrade head
 
@@ -59,17 +60,6 @@ jobs:
         run: uv run pylint . --verbose --fail-under=9
       
       - name: Run test and coverage
-        env:
-          POSTGRES_DB: devflow_test
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          SMTP_HOST: localhost
-          SMTP_PORT: 2525
-          SMTP_USERNAME: test
-          SMTP_PASSWORD: test
-          SMTP_FROM: test@example.com
         run: uv run pytest --cov=. --cov-report=term-missing --cov-report=html --cov-fail-under=95
       
       - name: Upload coverage report

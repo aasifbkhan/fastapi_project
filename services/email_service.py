@@ -26,7 +26,6 @@ class EmailService:
         message["Subject"] = subject
 
         message.set_content(body)
-        print("hello")
 
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as smtp:
             smtp.starttls()

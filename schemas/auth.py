@@ -1,7 +1,7 @@
 """
 This module contains classes of auth api request and response pydantic model
 """
-from pydantic import BaseModel, Field, EmailStr, model_validator
+from pydantic import BaseModel, Field, EmailStr, model_validator, ValidationError
 
 class SignupRequest(BaseModel):
     """

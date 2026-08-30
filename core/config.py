@@ -1,6 +1,7 @@
 """
 Initializing settings with envaironment variables. such as database, smtp etc.
 """
+import os
 from typing import Dict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
     SMTP_FROM: str
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=os.getenv("ENV_FILE", ".env"),
         extra="ignore",
     )
 

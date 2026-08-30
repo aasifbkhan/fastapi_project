@@ -1,9 +1,14 @@
+"""
+Database configuration and session creation.
+"""
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.pool import NullPool
 from core.config import settings
 
 engine = create_async_engine(
     settings.database_url,
-    echo=True
+    echo=True,
+    poolclass=NullPool,
 )
 
 async_session_factory = async_sessionmaker(
@@ -13,5 +18,8 @@ async_session_factory = async_sessionmaker(
 )
 
 async def get_session():
+    """
+    Database session created to execute sql queries
+    """
     async with async_session_factory() as session:
         yield session

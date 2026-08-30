@@ -1,17 +1,27 @@
+"""
+This module contains authentication related classes and fuctions.
+"""
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.user_repository import UserRepository
 from schemas.auth import SignupRequest
 from core.security import hash_password
-from models.user import User
+from models import User
 
 class AuthService:
+    """
+    This class provide functions to sighnup, login, logout, 
+    change password, forget password, email verifacation.
+    """
     def __init__(
         self,
-        user_repository: UserRepository
+        user_repository: UserRepository,
     ):
         self.user_repository = user_repository
 
     async def signup(self, data: SignupRequest, session: AsyncSession):
+        """
+        This function signup the new user in the application
+        """
         existing_email = await self.user_repository.get_by_email(
             data.email,
             session
@@ -29,10 +39,4 @@ class AuthService:
             password = hashed_password
         )
 
-        try:
-            await self.user_repository.create(user, session)
-            return {"message": "User registerd succesfully"}
-        except Exception as exc:
-            raise
-        
-        
+        return await self.user_repository.create(user, session)

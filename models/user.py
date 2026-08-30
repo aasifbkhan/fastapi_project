@@ -1,11 +1,16 @@
+"""
+This module has the user table model
+"""
 from datetime import datetime, timezone
 from uuid import UUID
 from sqlmodel import SQLModel, Field
 from uuid6 import uuid7
 from sqlalchemy import DateTime
-from sqlalchemy.orm import Mapped, mapped_column
 
 class User(SQLModel, table=True):
+    """
+    This class represents the user table
+    """
     __tablename__ = "users"
     id: UUID = Field(
         default_factory=uuid7,

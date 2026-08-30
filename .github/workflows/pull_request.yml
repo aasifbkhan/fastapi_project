@@ -1,0 +1,72 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    env:
+      POSTGRES_DB: devflow_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      SMTP_HOST: localhost
+      SMTP_PORT: 2525
+      SMTP_USERNAME: test
+      SMTP_PASSWORD: test
+      SMTP_FROM: test@example.com
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: devflow_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d devflow_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Setup Python 3.13
+        run: uv python install 3.13
+
+      - name: Install Dependencies
+        run: uv sync --dev
+      
+      - name: Run Database Migrations
+        run: |
+          uv run alembic upgrade head
+
+      - name: Run Pylint
+        run: uv run pylint . --verbose --fail-under=9
+      
+      - name: Run test and coverage
+        run: uv run pytest --cov=. --cov-report=term-missing --cov-report=html --cov-fail-under=95
+      
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+          

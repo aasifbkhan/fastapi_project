@@ -17,6 +17,12 @@ jobs:
       POSTGRES_PASSWORD: postgres
       POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM: test@example.com
+      SMTP_USE_TLS: "false"
 
     services:
       postgres:
@@ -96,12 +102,6 @@ jobs:
       - name: Start FastAPI
         env:
           POSTGRES_DB: devflow_e2e
-          SMTP_HOST: localhost
-          SMTP_PORT: 1025
-          SMTP_USERNAME: ""
-          SMTP_PASSWORD: ""
-          SMTP_FROM: test@example.com
-          SMTP_USE_TLS: "false"
         run: |
           nohup uv run uvicorn main:app \
             --host 0.0.0.0 \

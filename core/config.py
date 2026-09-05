@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     SMTP_USERNAME: str
     SMTP_PASSWORD: str
     SMTP_FROM: str
+    SMTP_USE_TLS: bool
 
     model_config = SettingsConfigDict(
         env_file=os.getenv("ENV_FILE", ".env"),
@@ -48,7 +49,8 @@ class Settings(BaseSettings):
             "smtp_port": self.SMTP_PORT,
             "smtp_username": self.SMTP_USERNAME,
             "smtp_password": self.SMTP_PASSWORD,
-            "smtp_from": self.SMTP_FROM
+            "smtp_from": self.SMTP_FROM,
+            "smtp_use_tls": self.SMTP_USE_TLS,
         }
 
 settings = Settings()

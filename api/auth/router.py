@@ -31,7 +31,7 @@ async def user_signup(
         user = await auth_service.signup(data, session)
         background_tasks.add_task(
             email_service.send_email,
-            to="khanaasifb98@gmail.com",
+            to=user.email,
             subject="Test Email",
             body=f"Welcome {user.first_name} {user.last_name}!"
         )

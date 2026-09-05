@@ -14,6 +14,10 @@ async def test_send_email():
     """
     email_service = EmailService()
 
+    email_service.smtp_use_tls = True
+    email_service.smtp_username = "username"
+    email_service.smtp_password = "password"
+
     smtp = MagicMock()
 
     # The object returned by `with SMTP(...) as smtp`

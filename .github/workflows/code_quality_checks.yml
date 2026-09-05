@@ -1,0 +1,155 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: devflow_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d devflow_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+      mailpit:
+        image: axllent/mailpit:v1.31.0
+        ports:
+          - 1025:1025
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Setup Python 3.13
+        run: uv python install 3.13
+
+      - name: Install Dependencies
+        run: uv sync --dev
+
+      - name: Create E2E Database
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql \
+            -h localhost \
+            -p 5432 \
+            -U postgres \
+            -d postgres \
+            -c "CREATE DATABASE devflow_e2e;"
+      
+      - name: Run Database Migrations
+        env:
+          POSTGRES_DB: devflow_test
+        run: |
+          uv run alembic upgrade head
+      
+      - name: Run E2E DB Migrations
+        env:
+          POSTGRES_DB: devflow_e2e
+        run: |
+          uv run alembic upgrade head
+
+      - name: Run Pylint
+        run: uv run pylint . --verbose --fail-under=9
+
+      - name: Clear Coverage Data
+        run: |
+          uv run coverage erase
+      
+      - name: Run Unit Tests
+        run: |
+          uv run pytest tests/unit --cov=. --cov-append --cov-report=term-missing
+
+      - name: Run Integration Tests
+        env:
+          POSTGRES_DB: devflow_test
+        run: |
+          uv run pytest tests/integration --cov=. --cov-append --cov-report=term-missing
+
+      - name: Start FastAPI
+        env:
+          POSTGRES_DB: devflow_e2e
+          SMTP_HOST: localhost
+          SMTP_PORT: 1025
+          SMTP_USERNAME: ""
+          SMTP_PASSWORD: ""
+          SMTP_FROM: test@example.com
+          SMTP_USE_TLS: "false"
+        run: |
+          nohup uv run uvicorn main:app \
+            --host 0.0.0.0 \
+            --port 8000 \
+            > fastapi.log 2>&1 &
+
+      - name: Wait for FastAPI
+        run: |
+          for i in {1..30}; do
+            if curl --fail http://localhost:8000/docs > /dev/null 2>&1; then
+              echo "FastAPI is ready"
+              exit 0
+            fi
+
+            sleep 1
+          done
+
+          echo "FastAPI failed to start"
+          cat fastapi.log
+          exit 1
+
+      - name: Run E2E Tests
+        env:
+          POSTGRES_DB: devflow_e2e
+          SMTP_HOST: localhost
+          SMTP_PORT: 1025
+          SMTP_USERNAME: ""
+          SMTP_PASSWORD: ""
+          SMTP_FROM: test@example.com
+          SMTP_USE_TLS: "false"
+        run: |
+          uv run pytest tests/e2e -v
+
+      - name: Upload FastAPI Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastapi-logs
+          path: fastapi.log
+
+      - name: Generate Coverage Report
+        run: |
+          uv run coverage report --fail-under=95
+          uv run coverage html
+      
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+          

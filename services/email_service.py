@@ -14,6 +14,7 @@ class EmailService:
         self.smtp_username = settings.email_settings.get('smtp_username')
         self.smtp_password = settings.email_settings.get('smtp_password')
         self.smtp_from = settings.email_settings.get('smtp_from')
+        self.smtp_use_tls = settings.email_settings.get("smtp_use_tls", False)
 
     async def send_email(self, to: str, subject: str, body: str):
         """
@@ -28,9 +29,13 @@ class EmailService:
         message.set_content(body)
 
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as smtp:
-            smtp.starttls()
-            smtp.login(
-                self.smtp_username,
-                self.smtp_password,
-            )
+            if self.smtp_use_tls:
+                smtp.starttls()
+
+            if self.smtp_username and self.smtp_password:
+                smtp.login(
+                    self.smtp_username,
+                    self.smtp_password,
+                )
+                
             smtp.send_message(message)

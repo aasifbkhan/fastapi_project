@@ -90,6 +90,8 @@ jobs:
           uv run coverage erase
       
       - name: Run Unit Tests
+        env:
+          POSTGRES_DB: devflow_test
         run: |
           uv run pytest tests/unit --cov=. --cov-append --cov-report=term-missing
 

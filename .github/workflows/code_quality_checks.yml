@@ -105,7 +105,7 @@ jobs:
         env:
           POSTGRES_DB: devflow_e2e
         run: |
-          nohup uv run uvicorn main:app \
+          nohup .venv/bin/python -m uvicorn main:app \
             --host 0.0.0.0 \
             --port 8000 \
             > fastapi.log 2>&1 &

@@ -223,3 +223,4 @@ Authentication currently includes sign-up only. Login, logout, email verificatio
 - Never commit `.env` files or real database/SMTP credentials.
 - Use a strong PostgreSQL password outside local development.
 - Configure trusted SMTP credentials and update the sign-up recipient behavior before deployment.
+

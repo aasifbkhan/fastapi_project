@@ -72,4 +72,13 @@ class TestUserRepository:
 
         assert result is user
         assert result.id is not None
-        assert result.email == "alice@example.com"
+
+        saved_user = await repository.get_by_email(
+            "alice@example.com",
+            session,
+        )
+        assert saved_user is not None
+        assert saved_user.id == result.id
+        assert saved_user.first_name == "Alice"
+        assert saved_user.last_name == "Smith"
+        assert saved_user.email == "alice@example.com"

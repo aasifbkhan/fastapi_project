@@ -67,7 +67,7 @@ class TestAuthRouter:
 
         background_tasks.add_task.assert_called_once_with(
             email_mock,
-            to="khanaasifb98@gmail.com",
+            to=data.email,
             subject="Test Email",
             body="Welcome John Doe!",
         )

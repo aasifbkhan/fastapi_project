@@ -1,5 +1,5 @@
 """
-Unit tests for authentication router.
+Unit tests for authentication router (API v1).
 """
 from unittest.mock import AsyncMock, MagicMock
 
@@ -7,7 +7,7 @@ import pytest
 from fastapi import HTTPException
 from starlette.requests import Request
 
-from api.auth.router import SIGNUP_SUCCESS_MESSAGE, user_signup
+from api.v1.auth.router import SIGNUP_SUCCESS_MESSAGE, user_signup
 from core.exceptions import EmailAlreadyRegisteredError
 from core.rate_limit import limiter
 from models import User

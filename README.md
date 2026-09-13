@@ -9,6 +9,7 @@ DevFlow is a FastAPI backend for the DevFlow application. It currently provides 
 - PostgreSQL, SQLAlchemy async, SQLModel, and `asyncpg`
 - Alembic for schema migrations
 - Argon2 for password hashing
+- SlowAPI for signup rate limiting
 - `uv` for dependency and environment management
 - Pytest for unit and integration tests
 
@@ -52,12 +53,15 @@ Docker is optional. The included application container does not start PostgreSQL
    POSTGRES_PASSWORD=change-me
    POSTGRES_HOST=localhost
    POSTGRES_PORT=5432
+   SQL_ECHO=false
+   DATABASE_NULL_POOL=false
 
    SMTP_HOST=smtp.example.com
    SMTP_PORT=587
    SMTP_USERNAME=your-smtp-username
    SMTP_PASSWORD=your-smtp-password
    SMTP_FROM=no-reply@example.com
+   SMTP_USE_TLS=true
    ```
 
    The application reads `.env` by default. To use a different file, set `ENV_FILE` to its path before running a command.
@@ -90,7 +94,11 @@ Build and run the API container with:
 docker compose up --build
 ```
 
-The service listens on port `8000`. Ensure the database and SMTP settings are provided to the container (for example, through an environment file or Compose configuration) and that `POSTGRES_HOST` resolves from inside the container.
+The service loads environment variables from `.env` via `env_file` and listens on port `8000`. Ensure `POSTGRES_HOST` resolves from inside the container. Run migrations separately before or after start:
+
+```bash
+uv run alembic upgrade head
+```
 
 ## API
 
@@ -98,7 +106,7 @@ All application routes are prefixed with `/api/v1`.
 
 ### `POST /api/v1/auth/signup`
 
-Creates an inactive user account and stores an Argon2-hashed password.
+Creates an inactive user account and stores an Argon2-hashed password. Limited to **5 requests per minute per client IP**.
 
 Request body:
 
@@ -112,9 +120,10 @@ Request body:
 }
 ```
 
-Password requirements:
+Name and password requirements:
 
-- 8–128 characters
+- `first_name` / `last_name`: 1–15 characters (database columns allow up to 255)
+- Password: 8–128 characters
 - At least one lowercase letter
 - At least one uppercase letter
 - At least one number
@@ -125,11 +134,11 @@ Successful response (`201 Created`):
 
 ```json
 {
-  "message": "Sign up successfull..!! Please check your email to verify the email."
+  "message": "Sign up successful. Please check your email."
 }
 ```
 
-If the email address is already registered, the endpoint returns `409 Conflict`. Invalid request data returns FastAPI's standard `422 Unprocessable Entity` response.
+If the email address is already registered, the endpoint returns `409 Conflict`. Invalid request data returns FastAPI's standard `422 Unprocessable Entity` response. Exceeding the rate limit returns `429 Too Many Requests`.
 
 Example request:
 
@@ -139,7 +148,7 @@ curl -X POST http://127.0.0.1:8000/api/v1/auth/signup \
   -d '{"first_name":"John","last_name":"Doe","email":"john@example.com","password":"Password123!","confirm_password":"Password123!"}'
 ```
 
-> **Current behavior:** the sign-up email is queued as a background task but is presently addressed to a fixed development email in `api/auth/router.py`, not to the newly registered user's email. Update that recipient before using this endpoint in production.
+> **Current behavior:** after a successful signup, a welcome email is queued as a background task to the newly registered user's email. SMTP failures are logged and do not change the `201` response. Email verification is not implemented yet; accounts remain inactive until that flow is added.
 
 ## Database migrations
 
@@ -175,13 +184,17 @@ POSTGRES_USER=devflow_test
 POSTGRES_PASSWORD=devflow_test
 POSTGRES_HOST=localhost
 POSTGRES_PORT=55432
+SQL_ECHO=false
+DATABASE_NULL_POOL=true
 
 SMTP_HOST=localhost
 SMTP_PORT=1025
 SMTP_USERNAME=test
 SMTP_PASSWORD=test
 SMTP_FROM=no-reply@example.com
+SMTP_USE_TLS=true
 ```
+
 
 Apply migrations and run the suite:
 
@@ -222,5 +235,5 @@ Authentication currently includes sign-up only. Login, logout, email verificatio
 
 - Never commit `.env` files or real database/SMTP credentials.
 - Use a strong PostgreSQL password outside local development.
-- Configure trusted SMTP credentials and update the sign-up recipient behavior before deployment.
-
+- Configure trusted SMTP credentials before deployment.
+- Signup is rate-limited to 5 requests per minute per IP.

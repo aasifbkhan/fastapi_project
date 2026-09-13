@@ -2,13 +2,17 @@
 End-to-end tests for authentication.
 """
 from uuid import uuid4
+
 import pytest
 from httpx import AsyncClient
+
+from api.auth.router import SIGNUP_SUCCESS_MESSAGE
+
 
 class TestAuthe2e:
     """
     e2e Auth Test
-    """ 
+    """
     @pytest.mark.asyncio
     async def test_user_can_signup(self):
         """
@@ -33,13 +37,14 @@ class TestAuthe2e:
 
         assert response.status_code == 201
         assert response.json() == {
-            "message": "Sign up successfull..!! Please check your email to verify the email."
+            "message": SIGNUP_SUCCESS_MESSAGE
         }
 
+    @pytest.mark.asyncio
     async def test_duplicate_email_rejected(self):
         """
         Test email gets rejected, complete user signup flow through HTTP.
-        """        
+        """
         email = f"e2e-{uuid4()}@example.com"
         payload = {
             "first_name": "E2E",
@@ -71,4 +76,3 @@ class TestAuthe2e:
         assert second_response.json() == {
             "detail": "Email already registered"
         }
-

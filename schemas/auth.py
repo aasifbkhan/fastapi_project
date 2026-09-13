@@ -1,16 +1,17 @@
 """
 This module contains classes of auth api request and response pydantic model
 """
-from pydantic import BaseModel, Field, EmailStr, model_validator, ValidationError
+from pydantic import BaseModel, Field, EmailStr, model_validator
+
 
 class SignupRequest(BaseModel):
     """
     This class contains the signup request field and validation
     """
-    first_name: str = Field(max_length=15)
-    last_name: str = Field(max_length=15)
+    first_name: str = Field(min_length=1, max_length=15)
+    last_name: str = Field(min_length=1, max_length=15)
     email: EmailStr
-    password:str = Field(min_length=8, max_length=128)
+    password: str = Field(min_length=8, max_length=128)
     confirm_password: str = Field(min_length=8, max_length=128)
 
     @model_validator(mode="after")
@@ -23,13 +24,13 @@ class SignupRequest(BaseModel):
 
         password = self.password
 
-        if not any (char.islower() for char in password):
+        if not any(char.islower() for char in password):
             raise ValueError("Password must contain at least one lowercase letter")
 
-        if not any (char.isupper() for char in password):
+        if not any(char.isupper() for char in password):
             raise ValueError("Password must contain at least one uppercase letter")
 
-        if not any (char.isdigit() for char in password):
+        if not any(char.isdigit() for char in password):
             raise ValueError("Password must contain at least one number")
 
         if not any(not char.isalnum() for char in password):
@@ -50,6 +51,7 @@ class SignupRequest(BaseModel):
             ]
         }
     }
+
 
 class SignupResponse(BaseModel):
     """

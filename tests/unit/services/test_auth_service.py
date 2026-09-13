@@ -2,9 +2,14 @@
 Test AuthService
 """
 from unittest.mock import AsyncMock, patch
+
 import pytest
-from services.auth_service import AuthService
+from sqlalchemy.exc import IntegrityError
+
+from core.exceptions import EmailAlreadyRegisteredError
 from schemas.auth import SignupRequest
+from services.auth_service import AuthService
+
 
 @pytest.mark.asyncio
 async def test_signup_success():
@@ -38,10 +43,11 @@ async def test_signup_success():
         session,
     )
 
+
 @pytest.mark.asyncio
 async def test_signup_with_existing_email():
     """
-    Test signup with  existing email
+    Test signup with existing email
     """
     repository = AsyncMock()
 
@@ -61,12 +67,13 @@ async def test_signup_with_existing_email():
     session = AsyncMock()
 
     with pytest.raises(
-        ValueError,
+        EmailAlreadyRegisteredError,
         match="Email already registered"
     ):
         await auth_service.signup(data, session)
 
     repository.create.assert_not_awaited()
+
 
 @pytest.mark.asyncio
 async def test_signup_hashes_password():
@@ -103,3 +110,37 @@ async def test_signup_hashes_password():
     assert created_user.last_name == "Doe"
     assert created_user.email == "john@example.com"
     assert created_user.password == "hashed_password"
+
+
+@pytest.mark.asyncio
+async def test_signup_maps_integrity_error_to_email_already_registered():
+    """
+    Test concurrent duplicate email raises EmailAlreadyRegisteredError.
+    """
+    repository = AsyncMock()
+    repository.get_by_email.return_value = None
+    repository.create.side_effect = IntegrityError(
+        "duplicate key",
+        params=None,
+        orig=Exception("unique violation"),
+    )
+
+    auth_service = AuthService(repository)
+
+    data = SignupRequest(
+        first_name="John",
+        last_name="Doe",
+        email="john@example.com",
+        password="Password123!",
+        confirm_password="Password123!"
+    )
+
+    session = AsyncMock()
+
+    with pytest.raises(
+        EmailAlreadyRegisteredError,
+        match="Email already registered"
+    ):
+        await auth_service.signup(data, session)
+
+    session.rollback.assert_awaited_once()

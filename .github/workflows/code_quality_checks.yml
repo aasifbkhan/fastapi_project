@@ -23,6 +23,8 @@ jobs:
       SMTP_PASSWORD: ""
       SMTP_FROM: test@example.com
       SMTP_USE_TLS: "false"
+      SQL_ECHO: "false"
+      DATABASE_NULL_POOL: "true"
 
     services:
       postgres:

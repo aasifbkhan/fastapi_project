@@ -1,11 +1,15 @@
 """
 This module contains authentication related classes and fuctions.
 """
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from repositories.user_repository import UserRepository
-from schemas.auth import SignupRequest
+
+from core.exceptions import EmailAlreadyRegisteredError
 from core.security import hash_password
 from models import User
+from repositories.user_repository import UserRepository
+from schemas.auth import SignupRequest
+
 
 class AuthService:
     """
@@ -28,15 +32,19 @@ class AuthService:
         )
 
         if existing_email:
-            raise ValueError("Email already registered")
+            raise EmailAlreadyRegisteredError()
 
         hashed_password = hash_password(data.password)
 
         user = User(
-            first_name = data.first_name,
-            last_name = data.last_name,
-            email = data.email,
-            password = hashed_password
+            first_name=data.first_name,
+            last_name=data.last_name,
+            email=data.email,
+            password=hashed_password
         )
 
-        return await self.user_repository.create(user, session)
+        try:
+            return await self.user_repository.create(user, session)
+        except IntegrityError as exc:
+            await session.rollback()
+            raise EmailAlreadyRegisteredError() from exc

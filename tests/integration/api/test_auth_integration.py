@@ -1,14 +1,18 @@
 """
 Integration tests for authentication APIs.
 """
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, select
 
+from api.auth.router import SIGNUP_SUCCESS_MESSAGE
+from api.deps import get_email_service
 from main import app
 from models import User
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup(session):
@@ -18,22 +22,29 @@ async def setup(session):
     await session.execute(delete(User))
     await session.commit()
 
+
+@pytest.fixture(autouse=True)
+def disable_rate_limit():
+    """
+    Disable SlowAPI rate limiting for integration tests.
+    """
+    app.state.limiter.enabled = False
+    yield
+    app.state.limiter.enabled = True
+
+
 class TestAuthApi:
     """
     Integration test for auth api.
     """
 
     @pytest.mark.asyncio
-    async def test_signup_api_success(self, session, monkeypatch):
+    async def test_signup_api_success(self, session):
         """
         Test successful user signup through the API.
         """
-
-        email_mock = AsyncMock()
-        monkeypatch.setattr(
-            "api.auth.router.email_service.send_email",
-            email_mock,
-        )
+        email_mock = MagicMock()
+        app.dependency_overrides[get_email_service] = lambda: email_mock
 
         payload = {
             "first_name": "John",
@@ -43,19 +54,22 @@ class TestAuthApi:
             "confirm_password": "Password123!",
         }
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test"
-        ) as client:
-            response = await client.post(
-                "api/v1/auth/signup",
-                json=payload
-            )
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                response = await client.post(
+                    "api/v1/auth/signup",
+                    json=payload
+                )
+        finally:
+            app.dependency_overrides.pop(get_email_service, None)
 
-        email_mock.assert_awaited_once()
+        email_mock.send_email.assert_called_once()
         assert response.status_code == 201
         assert response.json() == {
-            "message": "Sign up successfull..!! Please check your email to verify the email."
+            "message": SIGNUP_SUCCESS_MESSAGE
         }
 
         result = await session.execute(
@@ -129,3 +143,40 @@ class TestAuthApi:
             )
 
         assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_signup_api_returns_429_when_rate_limited(self):
+        """
+        Test signup returns 429 when the rate limit is exceeded.
+        """
+        app.state.limiter.enabled = True
+        app.state.limiter.reset()
+
+        email_mock = MagicMock()
+        app.dependency_overrides[get_email_service] = lambda: email_mock
+
+        try:
+            async with AsyncClient(
+                transport=ASGITransport(app=app),
+                base_url="http://test"
+            ) as client:
+                responses = []
+                for index in range(6):
+                    payload = {
+                        "first_name": "John",
+                        "last_name": "Doe",
+                        "email": f"rate-{index}@example.com",
+                        "password": "Password123!",
+                        "confirm_password": "Password123!",
+                    }
+                    responses.append(
+                        await client.post(
+                            "api/v1/auth/signup",
+                            json=payload,
+                        )
+                    )
+        finally:
+            app.dependency_overrides.pop(get_email_service, None)
+            app.state.limiter.enabled = False
+
+        assert responses[5].status_code == 429

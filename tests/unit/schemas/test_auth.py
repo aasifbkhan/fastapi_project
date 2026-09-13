@@ -101,3 +101,31 @@ def test_signup_request_password_should_contain_special_character():
             password="Password123",
             confirm_password="Password123",
         )
+
+
+def test_signup_request_rejects_empty_first_name():
+    """
+    Test SignupRequest rejects empty first_name.
+    """
+    with pytest.raises(ValidationError):
+        SignupRequest(
+            first_name="",
+            last_name="Doe",
+            email="john@example.com",
+            password="Password123!",
+            confirm_password="Password123!",
+        )
+
+
+def test_signup_request_rejects_empty_last_name():
+    """
+    Test SignupRequest rejects empty last_name.
+    """
+    with pytest.raises(ValidationError):
+        SignupRequest(
+            first_name="John",
+            last_name="",
+            email="john@example.com",
+            password="Password123!",
+            confirm_password="Password123!",
+        )

@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str
     POSTGRES_PORT: int
+    SQL_ECHO: bool = False
+    DATABASE_NULL_POOL: bool = False
 
     # Email Settings
     SMTP_HOST: str

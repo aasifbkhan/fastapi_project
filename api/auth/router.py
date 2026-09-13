@@ -1,11 +1,21 @@
 """
 Authentication related apis
 """
-from fastapi import APIRouter, status, Depends, HTTPException, BackgroundTasks
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from api.deps import get_auth_service, get_email_service
 from core.database import get_session
+from core.exceptions import EmailAlreadyRegisteredError
+from core.rate_limit import limiter
 from schemas.auth import SignupRequest, SignupResponse
-from repositories.user_repository import UserRepository
 from services.auth_service import AuthService
 from services.email_service import EmailService
 
@@ -14,15 +24,22 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
-user_repository = UserRepository()
-auth_service = AuthService(user_repository)
-email_service = EmailService()
+SIGNUP_SUCCESS_MESSAGE = "Sign up successful. Please check your email."
 
-@router.post("/signup", response_model=SignupResponse,status_code=status.HTTP_201_CREATED)
-async def user_signup(
-    data: SignupRequest, background_tasks:
-    BackgroundTasks,
-    session: AsyncSession = Depends(get_session)
+
+@router.post(
+    "/signup",
+    response_model=SignupResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+@limiter.limit("5/minute")
+async def user_signup(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    request: Request,  # pylint: disable=unused-argument
+    data: SignupRequest,
+    background_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session),
+    auth_service: AuthService = Depends(get_auth_service),
+    email_service: EmailService = Depends(get_email_service),
 ):
     """
     User signup request.
@@ -32,12 +49,12 @@ async def user_signup(
         background_tasks.add_task(
             email_service.send_email,
             to=user.email,
-            subject="Test Email",
-            body=f"Welcome {user.first_name} {user.last_name}!"
+            subject="Welcome to DevFlow",
+            body=f"Welcome {user.first_name} {user.last_name}!",
         )
-        return {"message": "Sign up successfull..!! Please check your email to verify the email."}
-    except ValueError as exc:
+        return {"message": SIGNUP_SUCCESS_MESSAGE}
+    except EmailAlreadyRegisteredError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=str(exc)
+            detail=str(exc),
         ) from exc

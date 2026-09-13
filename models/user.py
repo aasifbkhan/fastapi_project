@@ -5,7 +5,13 @@ from datetime import datetime, timezone
 from uuid import UUID
 from sqlmodel import SQLModel, Field
 from uuid6 import uuid7
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, Column
+
+
+def utc_now() -> datetime:
+    """Return the current UTC datetime."""
+    return datetime.now(timezone.utc)
+
 
 class User(SQLModel, table=True):
     """
@@ -42,13 +48,17 @@ class User(SQLModel, table=True):
         nullable=False
     )
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=utc_now,
         sa_type=DateTime(timezone=True),
         nullable=False,
     )
 
     updated_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=True),
-        nullable=False,
+        default_factory=utc_now,
+        sa_column=Column(
+            DateTime(timezone=True),
+            nullable=False,
+            default=utc_now,
+            onupdate=utc_now,
+        ),
     )

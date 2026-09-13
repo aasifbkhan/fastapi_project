@@ -5,10 +5,12 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import delete, select
 
+from core.exceptions import EmailAlreadyRegisteredError
 from models import User
 from repositories.user_repository import UserRepository
 from schemas.auth import SignupRequest
 from services.auth_service import AuthService
+
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup(session):
@@ -17,6 +19,7 @@ async def setup(session):
     """
     await session.execute(delete(User))
     await session.commit()
+
 
 class TestAuthService:
     """
@@ -75,7 +78,7 @@ class TestAuthService:
         )
 
         with pytest.raises(
-            ValueError,
+            EmailAlreadyRegisteredError,
             match="Email already registered"
         ):
             await auth_service.signup(data, session)

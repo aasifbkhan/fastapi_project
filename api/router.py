@@ -1,9 +1,10 @@
 """
-All the api routes are included here. e.g. auth, user etc.
+Top-level API routers. Versioned APIs are mounted here.
 """
 from fastapi import APIRouter
-from api.auth.router import router as auth_router
+
+from api.v1.router import v1_router
 
 api_router = APIRouter()
 
-api_router.include_router(auth_router)
+api_router.include_router(v1_router, prefix="/v1")

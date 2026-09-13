@@ -8,8 +8,8 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, select
 
-from api.auth.router import SIGNUP_SUCCESS_MESSAGE
 from api.deps import get_email_service
+from api.v1.auth.router import SIGNUP_SUCCESS_MESSAGE
 from main import app
 from models import User
 

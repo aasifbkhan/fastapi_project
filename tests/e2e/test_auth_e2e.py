@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from httpx import AsyncClient
 
-from api.auth.router import SIGNUP_SUCCESS_MESSAGE
+from api.v1.auth.router import SIGNUP_SUCCESS_MESSAGE
 
 
 class TestAuthe2e:

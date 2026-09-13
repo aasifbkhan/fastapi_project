@@ -1,5 +1,5 @@
 """
-Authentication related apis
+Authentication related apis (API v1).
 """
 from fastapi import (
     APIRouter,

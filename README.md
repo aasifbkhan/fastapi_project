@@ -16,7 +16,8 @@ DevFlow is a FastAPI backend for the DevFlow application. It currently provides 
 ## Project structure
 
 ```text
-api/             HTTP routers and dependencies
+api/             HTTP routers and shared dependencies
+api/v1/          Versioned API v1 feature routers
 core/            Application settings, database session, and security helpers
 models/          SQLModel database models
 repositories/    Database access layer

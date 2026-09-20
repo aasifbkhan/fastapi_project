@@ -1,0 +1,44 @@
+---
+description: Prefer GitHub MCP for remote GitHub tasks (PRs, commits, branches, CI/checks, issues)
+alwaysApply: true
+---
+
+# GitHub MCP Usage
+
+When a prompt involves **remote GitHub** work, use the **GitHub MCP** (`user-github`) as the primary interface. Do not default to `gh`, the GitHub website, or guessing from local git alone.
+
+## Trigger on these intents
+
+Use GitHub MCP when the user asks about any of:
+
+- Commits (history, a specific SHA, search commits, compare authors/messages)
+- Branches (list, inspect remote branch code/files, create branch on GitHub)
+- Pull requests (list, read, diff, reviews, comments, merge, update)
+- Issues (list, read, create/update, comments, labels)
+- CI / pipelines / checks (why a PR or commit is failing; check status via PR/commit tools)
+- Releases, tags, collaborators, org/team lookups
+- Searching code, repos, users, or PRs/issues on GitHub
+- Creating/updating files or pushing via GitHub APIs when that is the requested path
+
+## Workflow
+
+1. Discover tools with `GetDynamicTools` on namespace `user-github` before calling unfamiliar tools.
+2. Call `get_me` first when auth/context or owner/repo identity is unclear.
+3. Prefer `list_*` for broad listing; prefer `search_*` for filtered/keyword queries.
+4. For PRs: `pull_request_read`, `list_pull_requests` / `search_pull_requests`, then review/comment tools as needed.
+5. For failing checks/pipelines: inspect the PR or commit via MCP (status/checks/details). If Actions **logs** are not available through MCP, then use `gh` only for those logs—still gather PR/commit context via MCP first.
+6. If the namespace is `needsAuth` or a call returns auth errors, run `mcp_auth` for `user-github`, then retry.
+
+## Local git vs GitHub MCP
+
+| Use local `git` | Use GitHub MCP |
+|---|---|
+| Uncommitted/staged local changes | Remote commits, branches, PRs, issues |
+| Local rebase/commit/amend (when asked) | Remote file contents on a branch |
+| Repo state on disk | CI/check status, reviews, GitHub search |
+
+## Do not
+
+- Skip MCP and scrape github.com or invent remote state
+- Use `gh` for tasks MCP already covers (PR read, commits, branches, issues)
+- Mutate GitHub (merge, comment, create issue/PR) without a clear user request

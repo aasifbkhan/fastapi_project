@@ -4,7 +4,7 @@ Integration test of UserRepository
 import pytest
 import pytest_asyncio
 from sqlalchemy import delete
-from models import User
+from models import AuthToken, User
 from repositories.user_repository import UserRepository
 
 @pytest_asyncio.fixture(autouse=True)
@@ -12,6 +12,7 @@ async def setup(session):
     """
     SetUp the database and test fixtures
     """
+    await session.execute(delete(AuthToken))
     await session.execute(delete(User))
     await session.commit()
 

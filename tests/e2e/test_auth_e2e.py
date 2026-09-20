@@ -138,7 +138,8 @@ class TestAuthe2e:
             "confirm_password": password,
         }
         async with AsyncClient(base_url="http://localhost:8000") as client:
-            await client.post("/api/v1/auth/signup", json=payload)
+            signup = await client.post("/api/v1/auth/signup", json=payload)
+            assert signup.status_code == 201
             verify_token = await _issue_verification_token_for_email(email)
             await client.post(
                 "/api/v1/auth/verify-email",
@@ -186,7 +187,8 @@ class TestAuthe2e:
             "confirm_password": password,
         }
         async with AsyncClient(base_url="http://localhost:8000") as client:
-            await client.post("/api/v1/auth/signup", json=payload)
+            signup = await client.post("/api/v1/auth/signup", json=payload)
+            assert signup.status_code == 201
             verify_token = await _issue_verification_token_for_email(email)
             await client.post(
                 "/api/v1/auth/verify-email",

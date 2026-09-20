@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
     FRONTEND_URL: str
+    RATE_LIMIT_ENABLED: bool = True
 
     model_config = SettingsConfigDict(
         env_file=os.getenv("ENV_FILE", ".env"),

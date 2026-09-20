@@ -113,6 +113,7 @@ jobs:
       - name: Start FastAPI
         env:
           POSTGRES_DB: devflow_e2e
+          RATE_LIMIT_ENABLED: "false"
         run: |
           nohup .venv/bin/python -m uvicorn main:app \
             --host 0.0.0.0 \
